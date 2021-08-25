@@ -1,6 +1,4 @@
 function strf = calculate_strf(spk, trigger, binaural, envfile, tbefore, tafter)
-% 
-% Simple script to call the strf function strfdbcalc.m
 %
 % strf = calculate_strf(spk, trigger, binaural, envfile, tbefore, tafter); 
 %
@@ -13,9 +11,7 @@ function strf = calculate_strf(spk, trigger, binaural, envfile, tbefore, tafter)
 % binaural : optional. Specifies if the stimulus was delivered
 %            binaurally. 1 = yes, 0 = no. Default is 0.
 %
-% envfile : optional argument. Specifies the envelope file
-%             to use for reverse correlation. The default is
-%             #4, listed below.
+% envfile : address of the stimulus .spr file
 %
 % tbefore and tafter are optional arguments. They specify how much
 % time you wish to process before a spike and how much time after.
@@ -86,7 +82,7 @@ if ~isfield(spk, 'spiketimes')
     spk = spk.spk;
 end
 
-
+strf = struct([]);
 for i = 1:length(spk)
 
    sp = spk(i).spiketimes;
