@@ -24,20 +24,24 @@ function [tmf, xmf, rtf] = sm_mtf_sta2rtf(v, taxis, faxis, MaxFM, MaxRD, nbin1, 
 %     -- updated by Congcong 11.05.2019
 
 
-if ( nargin < 8 )
-   Display = 'n';
+if ( nargin < 6 )
+    nbin1 = 16;
+    nbin2 = 20;
+    Display = 'n';
+elseif ( nargin < 8 )
+    Display = 'n';
 end
 
 % Sampling rate along temporal/spectral filter axes
 FsT = 1/(taxis(3)-taxis(2));
 FsX = 1/log2(faxis(2)/faxis(1));
 
-dtf = MaxFM/nbin1; % Want 15 bins over the temporal modulation range
+dtf = MaxFM/nbin1; % Want 16 bins over the temporal modulation range
 ntbins = ceil(FsT / dtf); % sampling rate over temp res
 ntbins = ntbins + ~rem(ntbins,2); % add a bin if we have an even number
 %ntbins = 129;
 
-dff = MaxRD/nbin2; % Want 15 bins over the frequency modulation range
+dff = MaxRD/nbin2; % Want 20 bins over the frequency modulation range
 nfbins = ceil(FsX / dff); % sampling rate over freq resolution
 nfbins = nfbins + ~rem(nfbins,2); % add a bin to get an odd number
 %nfbins = 129;
