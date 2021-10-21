@@ -48,7 +48,7 @@ for ii = 1:niter
     spk.spiketimes = spiketimes;
 end
 
-spiketimes = flip(spiketimes);
+spiketimes = stimstart + stimend - spiketimes;
 nstrfcorr = zeros(niter,1);
 for ii = 1:niter
     if mod(ii, 100) == 0
