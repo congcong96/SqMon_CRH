@@ -9,4 +9,10 @@ There are two ways of calculating STRF:
 
 
 
-**ProbeRecord.mat** contains infromation about probe types and recording areas. Important fields: 'monkey' - from which monkey the data is collected; 'exp' - time stamp for the recording in the form yymmdd_hhmmss; 'stim' - sound stimulus played during the recording; 'ProbeName' - name of the probe used; 'area' - recoridng made from core or belt, empty means no record available; 'field' - fileds in core or belt area. We are less confident about the labels of fields within each area. So, be careful with your interpretation when using this.
+**ProbeRecord.mat** contains infromation about probe types and recording areas. Important fields: 
+   * *monkey* - from which monkey the data is collected;   
+   * *exp* - time stamp for the recording in the form yymmdd_hhmmss;   
+   * *stim* - sound stimulus played during the recording;   
+   * *ProbeName* - name of the probe used;   
+   * *area* - recoridng made from core or belt, empty means no record available;   
+   * *field* - fileds in core or belt area. We are less confident about the labels of fields within each area. So, be careful with your interpretation when using this.
