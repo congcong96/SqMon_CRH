@@ -30,7 +30,7 @@ if nargin == 2
 end
 nshift = 100;
 
-segmentlength = ceil(length(spktrain)/10);
+    segmentlength = ceil(length(spktrain)/10);
 segmentstart = segmentlength*(0:9)+1;
 segmentend = [segmentlength*(1:9) length(spktrain)];
 
