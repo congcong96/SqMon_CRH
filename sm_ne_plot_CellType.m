@@ -239,50 +239,6 @@ legend({'narrow spiking', 'broad spiking'})
 xlabel('number of cNE a neuron belongs to')
 ylabel('proportion')
 
-%% bar plot of proportion of inhibitory neurons in positive members and negative members
-membertype = cell(1,length(nefiles));
-celltype = cell(1,length(nefiles));
-for ii = 2:length(nefiles)
-    load(nefiles(ii).name, 'exp_site_nedata', 'waveform')
-    nedata = exp_site_nedata.nedata;
-    celltype_all = double([waveform.tpd] <= 0.35);
-    nNE = size(nedata.Patterns,2);
-    NEmember = nedata.NEmembers;
-    membertype_tmp = cell(1, nNE);
-    celltype_tmp = cell(1, nNE);
-    for jj = 1:nNE
-        member = NEmember{jj};
-        pattern = nedata.Patterns(:,jj);
-        posi_idx = member(pattern(member) > 0);
-        neg_idx = member(pattern(member) < 0);
-        
-        if isempty(neg_idx) || length(posi_idx) == 1
-            continue
-        end
-        
-        membertype_tmp{jj} = [ones(size(posi_idx)); zeros(size(neg_idx))];
-        celltype_tmp{jj} = [celltype_all(posi_idx), celltype_all(neg_idx)];
-    end
-    
-    membertype{ii} = cell2mat(membertype_tmp');
-    celltype{ii} = cell2mat(celltype_tmp);
-end
-
-celltype = cell2mat(celltype);
-membertype = cell2mat(membertype');
-%
-c_pNE = histcounts(celltype(membertype==0), 0:2, 'normalization', 'probability');
-c_nNE = histcounts(celltype(membertype==1), 0:2, 'normalization', 'probability');
-c_all = histcounts(celltype, 0:2, 'normalization', 'probability');
-bar( [0 2]-0.5, c_pNE, 0.25, 'FaceColor', 'r')
-hold on
-bar([0 2], c_nNE, 0.25, 'FaceColor', 'b')   
-bar([0 2]+0.5, c_all, 0.25, 'FaceColor', 'k')   
-legend({'positive NEmember', 'Negative NEmember', 'all neurons'})
-xticks([0 2])
-xticklabels({'broad spiking', 'narrow spiking'})
-ylabel('proportion')
-
 %% histogram of proportion of inhibitory neurons in positive members and negative members
 proportion_ne = cell(1,length(nefiles));
 proportion_posi = cell(1,length(nefiles));

@@ -2,11 +2,11 @@
 addpath(genpath('/home/conghu/MatlabCodes/SqMo_cNE'))
 
 data_path = '/data/congcong/SqMoPhys_Josh/mountainsort/pydict/std4_dmr_thresh';
-save_path = '/data/congcong/SqMoPhys_Josh/cNE_analysis/all_bins';
 stimfolder = '/data/congcong/SqMoPhys_Josh/stim';
 stimfile = fullfile(stimfolder, 'contra-dmr-176flo-20000fhi-4SM-64TM-15db-48DF-96khz-10min_DFt1_DFf5_stim.mat');
 
 %%  ---- PART1:cNE calculation ----------------------------------
+save_path = '/data/congcong/SqMoPhys_Josh/cNE_analysis/all_bins';
 cd(data_path)
 files = dir('*-dmr*curated-thresh.mat');
 files = {files.name};
@@ -14,6 +14,8 @@ files = {files.name};
 binsize = [150, 100, 80, 50, 30, 20, 10, 8, 5, 2]; 
 ne_rn_data_processing2(files, 2*binsize, 1, save_path)
 
+% match ICs at different time bins
+sm_ne_plot_ICweights_matching_bins
 %% ---- PART2: determine member neurons of cNE--------------------------------
 % IC weights v.s. correlation of cNE train
 cd(save_path)

@@ -2,11 +2,13 @@ cd('/data/congcong/SqMoPhys_Josh/cNE_analysis')
 nefiles = dir('*20dft.mat');
 ICweights = cell(size(nefiles));
 ICweights_proportion = cell(size(nefiles));
-
+ICweights_sqrtn = cell(size(nefiles));
 for ii = 1:length(nefiles)
     load(nefiles(ii).name, 'exp_site_nedata')
     Patterns = exp_site_nedata.nedata.Patterns;
     Patterns_proportion = zeros(size(Patterns));
+    Patterns_sqrtn = zeros(size(Patterns));
+    nNeuron = size(Patterns,1);
     for jj = 1:size(Patterns,2)
         pattern = Patterns(:,jj);
         [~,idx] = max(abs(pattern));
@@ -14,20 +16,26 @@ for ii = 1:length(nefiles)
             pattern = - pattern;
             Patterns(:,jj) = pattern;
         end
+        Patterns_sqrtn(:,jj) = pattern*sqrt(nNeuron);
         pattern = pattern/max(pattern);
         Patterns_proportion(:,jj) = pattern;
     end
     ICweights{ii} = Patterns;
     ICweights_proportion{ii} = Patterns_proportion;
-    exp_site_nedata.nedata.Patterns = Patterns;
-    save(nefiles(ii).name, 'exp_site_nedata')
+    ICweights_sqrtn{ii} = Patterns_sqrtn;
+    
+    %exp_site_nedata.nedata.Patterns = Patterns;
+    %save(nefiles(ii).name, 'exp_site_nedata')
 end
+%
 ICweights_origin = cell2mat(cellfun(@(x) x(:), ICweights, 'UniformOutput', false));
-ICweights_origin = sort(ICweights_origin, 'descend')/max(ICweights_origin);
+ICweights_origin = sort(ICweights_origin, 'descend');
 ICweights_proportion = cell2mat(cellfun(@(x) x(:), ICweights_proportion, 'UniformOutput', false));
 ICweights_proportion = sort(ICweights_proportion, 'descend')/max(ICweights_proportion);
+ICweights_sqrtn = cell2mat(cellfun(@(x) x(:), ICweights_sqrtn, 'UniformOutput', false));
+ICweights_sqrtn = sort(ICweights_sqrtn, 'descend');
 %%
-subplot(221)
+subplot(231)
 stem(ICweights_origin, 'marker', '.', 'color', [0.2, 0.4 1.0])
 xlim([1 length(ICweights_origin)])
 ylim([-1 1])
@@ -36,7 +44,7 @@ ylabel('IC Weight')
 % curvefit = fit(x,ICweights_origin,'poly9','Normalize','on');
 % hold on
 % plot(curvefit,x,ICweights_origin, [0.2, 0.4 1.0], 'linewidth', 2)
-subplot(222)
+subplot(234)
 x = (1:length(ICweights_origin))';
 ICwcdf = x/length(ICweights_origin);
 plot(flip(ICweights_origin),ICwcdf, 'color', [0.2, 0.4 1.0], 'linewidth', 2)
@@ -56,7 +64,7 @@ ylabel('cumulative proportion')
 % xlabel('ICweight')
 
 %%
-subplot(223)
+subplot(232)
 %ICweights_proportion2 = ICweights_proportion(ICweights_proportion < 1);
 x = (1:length(ICweights_proportion))';
 %curvefit = fit(x,ICweights_proportion2,'poly9','Normalize','on');
@@ -69,7 +77,7 @@ xlim([1 length(ICweights_proportion)])
 ylim([-1 1])
 xlabel('IC #')
 ylabel('relative IC Weight')
-subplot(224)
+subplot(235)
 plot(flip(ICweights_proportion), (1:length(ICweights_proportion))/length(ICweights_proportion),  'color', [1.0, 0.4, 0.2], 'linewidth', 2)
 title('relative ICweight CDF')
 xlabel('relative ICweight')
@@ -92,7 +100,30 @@ plot([0.37 0.37], y*[0 1], 'k--')
 % xlim([1 length(x)])
 % ylabel('2nd derivative of ICweight CDF')
 % xlabel('ICweight')
-
+%%
+subplot(233)
+stem(ICweights_sqrtn, 'marker', '.', 'color', [1 0 .6])
+xlim([1 length(ICweights_sqrtn)])
+ylim([-4 4])
+xlabel('IC #')
+ylabel('IC Weight/sqrt(n)')
+hold on
+x = (1:length(ICweights_sqrtn))';
+plot(x, 1*ones(size(ICweights_sqrtn)), 'k--')
+plot(x, -1*ones(size(ICweights_sqrtn)), 'k--')
+subplot(236)
+ICwcdf = x/length(ICweights_sqrtn);
+plot(flip(ICweights_sqrtn),ICwcdf, 'color', [1 0 .6], 'linewidth', 2)
+title('ICweight/sqrt(n) CDF')
+xlabel('ICweight')
+ylabel('cumulative proportion')
+hold on
+y = ICwcdf(find(flip(ICweights_sqrtn) > -1, 1));
+plot([-2 -1], y*[1 1], 'k--')
+plot([-1 -1], y*[0 1], 'k--')
+y = ICwcdf(find(flip(ICweights_sqrtn) > 1, 1));
+plot([-2 1], y*[1 1], 'k--')
+plot([1 1], y*[0 1], 'k--')
 %% PLOT correlation matrix, IC weights and ICweigths expansion
 for ii = 1:length(nefiles)
     nfig = 1;
@@ -113,3 +144,4 @@ for ii = 1:length(nefiles)
         
     end
 end
+

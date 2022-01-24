@@ -7,7 +7,10 @@ cd(datapath)
 nefiles = dir('*-20dft.mat');
 %% plot CCG of posi and neg neurons
 ccgfolder = '/data/congcong/SqMoPhys_Josh/figure/cNE/ccg';
-for ii = 3%1:length(nefiles)
+CCG = [];
+tw = 100; %in ms
+bin = 2; %in ms
+for ii = 1:length(nefiles)
     
     % load data
     load(nefiles(ii).name, 'exp_site_nedata')
@@ -16,10 +19,12 @@ for ii = 3%1:length(nefiles)
     spkfile = dir(fullfile(spkfolder, [exp, '*']));
     load(fullfile(spkfile.folder, spkfile.name), 'spktrain')
     spktrain = spktrain(:,1:end-1);
+    spktrain = reshape(spktrain, [size(spktrain, 1), 2*bin, size(spktrain, 2)/2/bin]);%2ms resolution
+    spktrain = squeeze(sum(spktrain,2));
     nNE = size(nedata.Patterns, 2);
     NEmembers = nedata.NEmembers;
     nfigure = 1;
-    for jj = 2%1:nNE
+    for jj = 1:nNE
         member = NEmembers{jj};
         pattern = nedata.Patterns(:, jj);
         neg_idx = member(pattern(member) < 0);
@@ -28,10 +33,8 @@ for ii = 3%1:length(nefiles)
         end
         posi_idx = member(pattern(member) > 0);
         posi_train = spktrain(posi_idx, :)';
+        neg_train = spktrain(neg_idx, :)';
         for k1 = 1:length(neg_idx)
-            neg_train = spktrain(neg_idx(k1), :)'; 
-            neg_train = reshape(neg_train, [2, 599966]);
-            neg_train = sum(neg_train)';
             for k2 = 1:length(posi_idx)
                 nplot = (k1 - 1) * length(posi_idx) + k2;
                 nplot = mod(nplot, 16);
@@ -41,26 +44,21 @@ for ii = 3%1:length(nefiles)
                 elseif nplot == 0
                     nplot = 16;
                 end
-                posi_train = spktrain(posi_idx(k2), :)';
-                posi_train = reshape(posi_train, [2, 599966]);
-                posi_train = sum(posi_train)';
-                xc = xcorr(posi_train, neg_train, 200);
-                c = corr(posi_train, neg_train);
+                xc = xcorr(neg_train(:,k1), posi_train(:,k2), tw/bin);
+                c = corr(neg_train(:,k1), posi_train(:,k2));
                 subplot(4,4, nplot)
-                bar(-200:1:200, xc, 1, 'FaceColor', 'k')
+                bar(-tw:bin:tw, xc, 1, 'FaceColor', 'k')
                 hold on
                 title(sprintf('#%d-#%d CC: %.3f', neg_idx(k1), posi_idx(k2), c))
                 if max(xc) < 1
                     ylim([-1 1])
                 end
-                plot([-200 200], mean(xc)* [1 1], 'b')
-                plot([-200 200], (mean(xc) + 3*std(xc))* [1 1], 'g')
-                plot([-200 200], (mean(xc) - 3*std(xc))* [1 1], 'g')
                 if nplot == 16
                     printPDFandPSC(gcf, fullfile(ccgfolder, sprintf('ccg_%s_cNE%d_%d', exp, jj, nfigure)))
                     nfigure = nfigure + 1;
                     close
                 end
+                CCG = [CCG, zscore(xc)];
             end
         end
         if nplot ~= 16
@@ -70,3 +68,65 @@ for ii = 3%1:length(nefiles)
         end
     end
 end
+%%
+figure
+sem = std(CCG')/sqrt(size(CCG, 2));
+% plot waveform
+curve1 = mean(CCG, 2)' + sem;
+curve2 = mean(CCG, 2)' - sem;
+time = -tw:bin:tw;
+hold on
+a = fill([time, fliplr(time)], [curve1, fliplr(curve2)], 'k');
+a.FaceColor = .5 * [1 1 1];
+a.EdgeColor = 'none';
+plot(time, mean(CCG, 2), 'k', 'linewidth', 2)
+ylabel('z-score')
+xlabel('lag(ms)')
+title('correlation between positive and negative members')
+
+%% plot CCG of posi neurons
+CCG = [];
+for ii = 1:length(nefiles)
+    
+    % load data
+    load(nefiles(ii).name, 'exp_site_nedata')
+    exp = exp_site_nedata.exp;
+    nedata = exp_site_nedata.nedata;
+    spkfile = dir(fullfile(spkfolder, [exp, '*']));
+    load(fullfile(spkfile.folder, spkfile.name), 'spktrain')
+    spktrain = spktrain(:,1:end-1);
+    spktrain = reshape(spktrain, [size(spktrain, 1), 2*bin, size(spktrain, 2)/2/bin]);%2ms resolution
+    spktrain = squeeze(sum(spktrain,2));
+    nNE = size(nedata.Patterns, 2);
+    NEmembers = nedata.NEmembers;
+    for jj = 1:nNE
+        member = NEmembers{jj};
+        pattern = nedata.Patterns(:, jj);
+        neg_idx = member(pattern(member) < 0);
+        posi_idx = member(pattern(member) > 0);
+        if isempty(neg_idx) || length(posi_idx) < 2
+            continue
+        end
+        posi_train = spktrain(posi_idx, :)';
+        cmb = nchoosek(1:length(posi_idx), 2);
+        for kk = 1:size(cmb, 1)
+            xc = xcorr(posi_train(:,cmb(kk,1)), posi_train(:,cmb(kk,2)), tw);
+            CCG = [CCG, zscore(xc)];
+        end
+    end
+end
+%%
+figure
+sem = std(CCG')/sqrt(size(CCG, 2));
+% plot waveform
+curve1 = mean(CCG, 2)' + sem;
+curve2 = mean(CCG, 2)' - sem;
+time = -tw:bin:tw;
+hold on
+a = fill([time, fliplr(time)], [curve1, fliplr(curve2)], 'k');
+a.FaceColor = .5 * [1 1 1];
+a.EdgeColor = 'none';
+plot(time, mean(CCG, 2), 'k', 'linewidth', 2)
+ylabel('z-score')
+xlabel('lag(ms)')
+title('correlation among positive members')

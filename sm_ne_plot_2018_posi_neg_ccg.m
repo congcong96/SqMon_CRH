@@ -2,6 +2,7 @@
 addpath(genpath('/home/conghu/MatlabCodes/SqMo_cNE'))
 
 data_path = '/data/congcong/SqMoPhys_Josh/cNE_analysis';
+spkfolder = '/data/congcong/SqMoPhys_Josh/mountainsort/pydict/std4_dmr_thresh';
 figurefolder = '/data/congcong/SqMoPhys_Josh/figure/cNE/strf_rtf_crh_ccg/NE';
 
 stimfolder = '/data/congcong/SqMoPhys_Josh/stim';
@@ -9,18 +10,25 @@ stimfile = fullfile(stimfolder, 'contra-dmr-176flo-20000fhi-4SM-64TM-15db-48DF-9
 mtffile = regexprep(stimfile, '_stim', '_mtf');
 
 %% plot stem plot, CCG, STRF and CRH
+cd(data_path)
 nefiles = dir('*20dft.mat');
 
 for ii = 1:length(nefiles)
     load(nefiles(ii).name, 'exp_site_nedata')
+    fileID  = nefiles(ii).name(1:13);
+    spkfile = dir(fullfile(spkfolder, sprintf('%s*', fileID)));
+    load(fullfile(spkfile.folder, spkfile.name), 'spktrain')
+    spktrain = spktrain(:,1:end-1);
+    nNeuron = size(spktrain,1);
+    spktrain = reshape(spktrain, nNeuron, 4, size(spktrain,2)/4);%2ms binned
+    spktrain = squeeze(sum(spktrain,2));
     nedata = exp_site_nedata.nedata;
     nNE = size(nedata.Patterns,2);
-    spktrain = nedata.spktrain;
     NEmember = nedata.NEmembers;
     for jj = 1:nNE
         pattern = nedata.Patterns(:,jj);
         member = NEmember{jj};
-        if ~any(pattern(member) < 0)
+        if any(pattern(member) < 0)
             continue
         end
         % get positive and negative member neuron spike trains
@@ -56,37 +64,38 @@ for ii = 1:length(nefiles)
         
         % ccg
         % all positive neurons vs. all negative neurons
-        subplot(4,3,4)
-        ccg_neuron = xcorr(sum(spktrain_neg,1), sum(spktrain_posi,1), 20);
-        bar(-200:10:200, ccg_neuron, 1, 'k')
-        xlim([-200 200])
-        if max(ylim) < 1
-            ylim([-1 1])
-        end
-        title('nCell vs. pCell')
-        
-        % all negative neurons vs. positive NEtrain
-        subplot(4,3,5)
-        ccg_nneuron_pNE = xcorr(sum(spktrain_neg,1), NEtrain_posi, 20);
-        bar(-200:10:200, ccg_nneuron_pNE, 1, 'k')
-        xlim([-200 200])
-        if max(ylim) < 1
-            ylim([-1 1])
-        end
-        title('nCell vs. pNE')
-        
-        % negative NEtrain vs. positive NEtrain
-        if negNE % if exist multiple negative members
-            subplot(4,3,6)
-            ccg_nNE_pNE = xcorr(NEtrain_neg, NEtrain_posi, 20);
-            bar(-200:10:200, ccg_nNE_pNE, 1, 'k')
+        if ~isempty(neg_member)
+            subplot(4,3,4)
+            ccg_neuron = xcorr(sum(spktrain_neg,1), sum(spktrain_posi,1), 25);
+            bar(-50:2:50, ccg_neuron, 1, 'k')
+            xlim([-50 50])
+            if max(ylim) < 1
+                ylim([-1 1])
+            end
+            title('nCell vs. pCell')
+            
+            % all negative neurons vs. positive NEtrain
+            subplot(4,3,5)
+            ccg_nneuron_pNE = xcorr(sum(spktrain_neg,1), NEtrain_posi, 20);
+            bar(-200:10:200, ccg_nneuron_pNE, 1, 'k')
             xlim([-200 200])
             if max(ylim) < 1
                 ylim([-1 1])
             end
+            title('nCell vs. pNE')
+            
+            % negative NEtrain vs. positive NEtrain
+            if negNE % if exist multiple negative members
+                subplot(4,3,6)
+                ccg_nNE_pNE = xcorr(NEtrain_neg, NEtrain_posi, 20);
+                bar(-200:10:200, ccg_nNE_pNE, 1, 'k')
+                xlim([-200 200])
+                if max(ylim) < 1
+                    ylim([-1 1])
+                end
+            end
+            title('nNE vs. pNE')
         end
-        title('nNE vs. pNE')
-        
         % strf
         taxis = nedata.strf_taxis;
         faxis = nedata.strf_faxis;
@@ -99,7 +108,7 @@ for ii = 1:length(nefiles)
         subplot(4,3,9)
         if negNE
             plot_strf_raw(nedata.NEstrf.neg(jj,:), faxis, taxis)
-        else
+        elseif ~isempty(neg_member)
             plot_strf_raw(nedata.stamat(neg_member,:), faxis, taxis)
         end
         title('NEneg')
@@ -117,7 +126,7 @@ for ii = 1:length(nefiles)
         if negNE
             plot_CRH(nedata.NEcrh.neg(jj,:), taxis, faxis)
             title(sprintf('%dspk', sum(nedata.NEtrain.neg(jj,:))))
-        else
+        elseif ~isempty(neg_member)
             plot_CRH(nedata.neuroncrh(neg_member,:), taxis, faxis)
             title(sprintf('%dspk', sum(nedata.spktrain(neg_member,:))))
         end
